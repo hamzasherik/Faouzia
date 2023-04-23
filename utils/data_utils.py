@@ -53,6 +53,4 @@ def preprocess_labels(data: np.ndarray, labels_column_index: int, labels_to_one_
 
         one_hot_labels = np.array([labels_to_one_hot_map[label] for label in labels])
 
-        data[:, labels_column_index] = one_hot_labels  # HACK: Better off not changing the original data
-
-        return data
+        return one_hot_labels

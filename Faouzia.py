@@ -1,13 +1,12 @@
 import numpy as np
-import pandas as pd
 
-from typing import Optional
 from abc import ABC
 from utils.logger import logger
 from utils.data_utils import labels_to_one_hot_map, preprocess_labels
 from models.Hyperparameters import Hyperparameters
+from models.Configuration import Configuration
 
-
+# TODO: Update docstring
 class Faouzia(ABC):
     """
     This class is used to determine the optimal configuration of parameters and hyperparameters for a multi-class classification 
@@ -17,55 +16,26 @@ class Faouzia(ABC):
     is already preprocessed and ready before passing to Faouzia.
 
     Attributes:
-        raw_data (np.ndarray): Raw tabular data stored in numpy array.
-        data_copy (np.ndarray): Copy of raw_data.
-        labels_col_idx (int): Index of the labels column.
-        hyperparameters (dict): Dictionary of hyperparameters.
-        weights (np.ndarray): Weights of the deep learning model.
-        bias (np.ndarray): Bias of the deep learning model.
-        labels_map (dict): Dictionary that maps labels to one-hot vectors.
+
     """
 
-    # TODO: Update docstring
-    def __init__(self, data: pd.DataFrame, labels_column_index: int) -> None:
+    def __init__(self, features: np.ndarray, labels: np.ndarray) -> None:
         """
         Constructs a new Faouzia object.
 
         Parameters:
-            data (pd.DataFrame): Raw tabular data stored in pandas dataframe.
-            labels_col_idx (int): Index of the labels column.
+            features (np.ndarray): Features of the dataset.
+            labels (np.ndarray): Labels of the dataset.
         """
         
         logger.info("Initializing Faouzia object...")
 
-        if not isinstance(data, pd.DataFrame):
-            logger.error(f'{type(data)} is an invalid datatype. Input data must be a pandas DataFrame')
-            raise TypeError(f'{type(data)} is an invalid datatype. Input data must be a pandas DataFrame')
+        self.features = features
+        self.labels = labels
 
-        self.labels_column_index = labels_column_index
-        self.raw_data = data.values
+        # TODO: Add validator that confirms contents of labels are one-hot encoded
 
-        # NOTE: I could require input data to be preprocessed where labels are one-hot encoded. This would simplify the code.
-        # TODO: Require input data to be preprocessed where labels are one-hot encoded. Another library I develop will be used to
-        # preprocess data.
-        self.labels_map = labels_to_one_hot_map(self.data_copy, self.labels_column_index)
-        self.data_processed = preprocess_labels(self.raw_data, self.labels_column_index, self.labels_map)
-
-
-        # TODO: Create pydantic model that stores weights, bias, and hyperparameters (not in the constructor). This model will be used
-        # internally to store configuration and their corresponding accuracies before determining the optimal configuration. The 
-        # optimal configuration can be accessed by a user through a getter method or directly through the Faouzia object.
-
-
-        self.hyperparameters = {}  # TODO: Move Hyperparameters initialization to constructor
-        self.weights = []  # TODO: Move weights initialization to constructor
-        self.bias = []  # TODO: Move bias initialization to constructor
-
-        # NOTE: For each of the 3 attributes above, we'll need to locally store their values and corresponding accuracy after each
-        # iteration of the lifecycle. This will allow us to determine the optimal configuration of parameters and hyperparameters.
-        # This means we may need to create a model class that stores the weights, bias, and hyperparameters.
-
-
+    # TODO: Update docstring
     def execute_lifecycle(self) -> bool:
         """
         This method executes the lifecycle that determines the optimal configuration of parameters and hyperparameters for a deep 
@@ -79,20 +49,26 @@ class Faouzia(ABC):
 
         logger.info("Executing lifecycle...")
 
-        self.initialize_hyperparameters()
+        hyperparameters = self.initialize_hyperparameters()
+        weights, bias = self.initialize_parameters(hyperparameters)
 
-        
-    def initialize_hyperparameters(self) -> None:
+        #config = Configuration(hyperparameters=hyperparameters, weights=weights, biases=bias)
+
+        return True
+
+    def initialize_hyperparameters(self) -> Hyperparameters:
         """
-        This method initializes the hyperparameters of the deep learning model and applies those values to the object's 
-        hyperparameters attribute.
+        This method initializes the hyperparameters of the deep learning model.
+
+        Returns:
+            Hyperparameters: Hyperparameters of the deep learning model.
         """
 
         logger.info("Initializing hyperparameters...")
-        # TODO: Add output layer activation function to activation_function_per_layer
-        self.hyperparameters = Hyperparameters(
-            num_input_dimensions=self.data_copy.shape[1] - 1,
-            num_output_nodes=len(self.labels_map),
+
+        hyperparameters = Hyperparameters(
+            num_input_dimensions=self.features.shape[1],
+            num_output_nodes=self.labels.shape[1],
             num_hidden_layers=1,
             num_nodes_per_hidden_layer={1: 10},
             activation_function_per_layer={1: 'relu'},
@@ -105,29 +81,69 @@ class Faouzia(ABC):
             regularization_method='l2'
         )
 
-        logger.debug(f'Hyperparameters: {self.hyperparameters}')
+        logger.debug(f'Hyperparameters: {hyperparameters}')
 
+        return hyperparameters
     
-    def initialize_parameters(self) -> bool:
+    # TODO: Update docstring
+    def initialize_parameters(self, hyperparameters: Hyperparameters):
         """
-        This method initializes the parameters of the deep learning model and applies those values to the object's weights and bias
-        attributes.
+        This method initializes the parameters (weights and bias) of the deep learning model.
+
+        Parameters:
+            hyperparameters (Hyperparameters): Hyperparameters of the deep learning model.
 
         Returns:
-            bool: True if parameters were initialized successfully, False otherwise.
+            tuple(np.ndarray, np.ndarray): Weights and biases of the deep learning model.
         """
 
         logger.info("Initializing parameters...")
 
-        self.weights.append(np.random.randn(self.hyperparameters.num_input_dimensions, 
-                                            self.hyperparameters.num_nodes_per_hidden_layer[1]))
-        self.bias.append(np.zeros((1, self.hyperparameters.num_nodes_per_hidden_layer[1])))  # FIXME: Check if this is correct
+        if hyperparameters.init_method == 'random_normal':
+            weights, bias = self.initialize_parameters_random_normal(hyperparameters)
+
+        logger.debug(f'Weights: {weights}')
+        logger.debug(f'Bias: {bias}')
+
+        return weights, bias
+
+    # TODO: Move to utils?
+    def initialize_parameters_random_normal(self, hyperparameters: Hyperparameters):
+        """
+        This method initializes the parameters (weights and bias) of the deep learning model using the random normal method.
+
+        Parameters:
+            hyperparameters (Hyperparameters): Hyperparameters of the deep learning model.
+
+        Returns:
+            tuple(np.ndarray, np.ndarray): Weights and biases of the deep learning model.
+        """
+
+        logger.info("Initializing parameters using random normal method...")
+
+        weights = []
+        bias = []
+
+        for i in range(1, hyperparameters.num_hidden_layers + 1):
+            weights.append(np.random.randn(hyperparameters.num_input_dimensions, hyperparameters.num_nodes_per_hidden_layer[i]))
+            bias.append(np.zeros((1, hyperparameters.num_nodes_per_hidden_layer[i])))
+
+        # TODO: Complete this method
+
+        return weights, bias
 
 
 
+import pandas as pd
 
 if __name__ == "__main__":
     test_data = pd.read_csv("IRIS.csv")
+    test_data = test_data.values
 
-    faouzia = Faouzia(test_data, 4)
+    labels_map = labels_to_one_hot_map(test_data, 4)
+    labels = preprocess_labels(test_data, 4, labels_map)
+
+    features = np.delete(test_data, 4, axis=1)
+
+    faouzia = Faouzia(features=features, labels=labels)
     faouzia.execute_lifecycle()

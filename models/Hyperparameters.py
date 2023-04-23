@@ -48,6 +48,7 @@ class Hyperparameters(BaseModel):
 
         if num_input_dimensions <= 0:
             raise ValueError('num_input_dimensions must be greater than zero')
+        
         return num_input_dimensions
     
     @validator('num_output_nodes')
@@ -64,6 +65,7 @@ class Hyperparameters(BaseModel):
 
         if num_output_nodes <= 0:
             raise ValueError('num_output_nodes must be greater than zero')
+        
         return num_output_nodes
     
     @validator('num_hidden_layers')
@@ -80,6 +82,7 @@ class Hyperparameters(BaseModel):
 
         if num_hidden_layers <= 0:
             raise ValueError('num_hidden_layers must be greater than zero')
+        
         return num_hidden_layers
     
     @validator('num_nodes_per_hidden_layer')
@@ -97,6 +100,7 @@ class Hyperparameters(BaseModel):
         for value in num_nodes_per_hidden_layer.values():
             if value <= 0:
                 raise ValueError('num_nodes_per_hidden_layer must be greater than zero')
+            
         return num_nodes_per_hidden_layer
     
     @validator('activation_function_per_layer')
@@ -112,9 +116,14 @@ class Hyperparameters(BaseModel):
         """
         # TODO: Move valid methods to constants file and update docstring.
         valid_activation_functions = ['relu', 'sigmoid', 'tanh']
-        for value in activation_function_per_layer.values():
-            if value not in valid_activation_functions:
+        
+        for key, value in activation_function_per_layer.items():
+            if value.casefold() not in valid_activation_functions:
                 raise ValueError('activation_function_per_layer must be either relu, sigmoid, or tanh')
+            
+            else:
+                activation_function_per_layer[key] = value.casefold()
+            
         return activation_function_per_layer
     
     @validator('learning_rate')
@@ -131,6 +140,7 @@ class Hyperparameters(BaseModel):
 
         if learning_rate <= 0:
             raise ValueError('learning_rate must be greater than zero')
+        
         return learning_rate
 
     @validator('optimizer')
@@ -146,9 +156,11 @@ class Hyperparameters(BaseModel):
         """
         # TODO: Move valid methods to constants file and update docstring.
         valid_optimizers = ['adam', 'sgd']
-        if optimizer not in valid_optimizers:
+
+        if optimizer.casefold() not in valid_optimizers:
             raise ValueError('optimizer must be either adam or sgd')
-        return optimizer
+        
+        return optimizer.casefold()
     
     @validator('loss_function')
     def loss_function_must_be_valid(cls, loss_function: str) -> str:
@@ -163,9 +175,11 @@ class Hyperparameters(BaseModel):
         """
         # TODO: Move valid methods to constants file and update docstring.
         valid_loss_functions = ['mse', 'binary_crossentropy', 'categorical_crossentropy']
-        if loss_function not in valid_loss_functions:
+
+        if loss_function.casefold() not in valid_loss_functions:
             raise ValueError('loss_function must be either mse or binary_crossentropy')
-        return loss_function
+        
+        return loss_function.casefold()
     
     @validator('num_epochs')
     def num_epochs_must_be_greater_than_zero(cls, num_epochs: int) -> int:
@@ -181,6 +195,7 @@ class Hyperparameters(BaseModel):
 
         if num_epochs <= 0:
             raise ValueError('num_epochs must be greater than zero')
+        
         return num_epochs
     
     @validator('batch_size')
@@ -197,6 +212,7 @@ class Hyperparameters(BaseModel):
 
         if batch_size <= 0:
             raise ValueError('batch_size must be greater than zero')
+        
         return batch_size
     
     @validator('init_method')
@@ -212,9 +228,11 @@ class Hyperparameters(BaseModel):
         """
         # TODO: Move valid methods to constants file and update docstring.
         valid_init_methods = ['he_uniform', 'glorot_uniform', 'random_normal']
-        if init_method not in valid_init_methods:
+
+        if init_method.casefold() not in valid_init_methods:
             raise ValueError('init_method must be either he_uniform or glorot_uniform')
-        return init_method
+        
+        return init_method.casefold()
     
     @validator('regularization_method')
     def regularization_method_must_be_valid(cls, regularization_method: str) -> str:
@@ -229,6 +247,8 @@ class Hyperparameters(BaseModel):
         """
         # TODO: Move valid methods to constants file and update docstring.
         valid_regularization_methods = ['l1', 'l2', 'l1_l2']
-        if regularization_method not in valid_regularization_methods:
+
+        if regularization_method.casefold() not in valid_regularization_methods:
             raise ValueError('regularization_method must be either l1, l2, or l1_l2')
-        return regularization_method
+        
+        return regularization_method.casefold()
