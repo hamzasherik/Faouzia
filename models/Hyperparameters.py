@@ -115,11 +115,11 @@ class Hyperparameters(BaseModel):
             dict[int, str]: Activation function per layer.
         """
         # TODO: Move valid methods to constants file and update docstring.
-        valid_activation_functions = ['relu', 'sigmoid', 'tanh']
+        valid_activation_functions = ['relu', 'sigmoid', 'tanh', 'softmax']
         
         for key, value in activation_function_per_layer.items():
             if value.casefold() not in valid_activation_functions:
-                raise ValueError('activation_function_per_layer must be either relu, sigmoid, or tanh')
+                raise ValueError(f'{value} is an invalid activation function for layer {key}')
             
             else:
                 activation_function_per_layer[key] = value.casefold()
@@ -174,10 +174,10 @@ class Hyperparameters(BaseModel):
             str: Loss function.
         """
         # TODO: Move valid methods to constants file and update docstring.
-        valid_loss_functions = ['mse', 'binary_crossentropy', 'categorical_crossentropy']
+        valid_loss_functions = ['mse', 'categorical_cross_entropy']
 
         if loss_function.casefold() not in valid_loss_functions:
-            raise ValueError('loss_function must be either mse or binary_crossentropy')
+            raise ValueError(f'{loss_function} is an invalid loss function')
         
         return loss_function.casefold()
     
@@ -252,3 +252,6 @@ class Hyperparameters(BaseModel):
             raise ValueError('regularization_method must be either l1, l2, or l1_l2')
         
         return regularization_method.casefold()
+    
+    # TODO: Add validation that confirms num_nodes_per_hidden_layer and activation_function_per_layer have the same number of
+    # nodes as num_hidden_layers.
