@@ -5,7 +5,8 @@ from typing import Dict
 from abc import ABC
 from utils.logger import logger
 from utils.data_utils import labels_to_one_hot_map, preprocess_labels
-from utils.activation_functions import relu, softmax
+from utils.activation_functions import softmax, relu, softmax_derivative, relu_derivative
+from utils.loss_functions import categorical_cross_entropy, categorical_cross_entropy_derivative
 from models.Hyperparameters import Hyperparameters
 from models.Configuration import Configuration
 
@@ -77,13 +78,10 @@ class Faouzia(ABC):
 
         logger.info("Training model...")
 
-        weights_trained = copy.deepcopy(weights)
-        bias_trained = copy.deepcopy(bias)
-
         forward_pass_output = self.forward_pass(self.features, weights, bias, hyperparameters)
-        # loss = self.calculate_loss(self.labels, forward_pass_output)
-        # gradients = self.backward_pass(self.features, self.labels, forward_pass_output, weights, bias)
-        # weights_trained, bias_trained = self.update_parameters(weights, bias, gradients, hyperparameters)
+        loss = self.calculate_loss(self.labels, forward_pass_output, hyperparameters)
+
+        weights_trained, bias_trained = self.backpropagation(hyperparameters, weights, bias, self.features, self.labels)
 
 
     def forward_pass(self, features: np.ndarray, weights: np.ndarray, bias: np.ndarray, hyperparameters: Hyperparameters) -> np.ndarray:
@@ -141,6 +139,61 @@ class Faouzia(ABC):
 
         return loss
 
+    def backpropagation(self, hyperparameters: Hyperparameters, weights: np.ndarray, bias: np.ndarray, features: np.ndarray, labels: np.ndarray) -> np.ndarray:
+        """
+        This method performs backpropagation on the deep learning model.
+
+        Parameters:
+            hyperparameters (Hyperparameters): Hyperparameters of the deep learning model.
+            weights (np.ndarray): Weights of the deep learning model.
+            bias (np.ndarray): Bias of the deep learning model.
+            features (np.ndarray): Features of the dataset.
+
+        Returns:
+            np.ndarray: Updated weights and bias of the deep learning model.
+        """
+
+        logger.info("Performing backpropagation...")
+
+        weights_updated = weights.copy()
+        bias_updated = bias.copy()
+
+        logger.info("Performing forward pass...")
+
+        zs = []
+        activations = [features]
+
+        for layer in range(1, hyperparameters.num_hidden_layers + 2):
+
+            zs.append(np.dot(activations[layer - 1], weights[layer - 1]) + bias[layer - 1])
+            activations.append(eval(hyperparameters.activation_function_per_layer[layer])(zs[layer - 1]))
+
+        logger.info("Performing backward pass...")
+
+        delta = []
+
+        # Output layer
+        delta.append(eval('categorical_cross_entropy_derivative')(labels, activations[-1]) * eval('softmax_derivative')(zs[-1]))
+
+        # Hidden layers
+        for layer in range(hyperparameters.num_hidden_layers, 0, -1):
+            delta.append(np.dot(delta[-1], weights[layer].T) * eval('relu_derivative')(zs[layer - 1]))
+
+        delta.reverse()
+
+        logger.debug(f'Delta: {delta}')
+
+        logger.info("Updating weights and bias...")
+
+        for layer in range(1, hyperparameters.num_hidden_layers + 2):
+            
+            weights_updated[layer - 1] = weights_updated[layer - 1] - (hyperparameters.learning_rate * np.dot(activations[layer - 1].T, delta[layer - 1]))
+            bias_updated[layer - 1] = bias_updated[layer - 1] - (hyperparameters.learning_rate * np.sum(delta[layer - 1], axis=0, keepdims=True))
+
+        logger.debug(f'Updated weights: {weights_updated}')
+        logger.debug(f'Updated bias: {bias_updated}')
+
+        return weights_updated, bias_updated
 
     # TODO: Move to utils
     def initialize_hyperparameters(self) -> Hyperparameters:
