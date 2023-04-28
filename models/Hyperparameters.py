@@ -21,10 +21,7 @@ class Hyperparameters(BaseModel):
         regularization_method (str): Regularization method.
     """
 
-    num_input_dimensions: int
-    num_output_nodes: int
-    num_hidden_layers: int
-    num_nodes_per_hidden_layer: Dict[int, int] 
+    num_nodes_per_layer: Dict[int, int]
     activation_function_per_layer: Dict[int, str]
     learning_rate: float
     optimizer: str
@@ -34,74 +31,23 @@ class Hyperparameters(BaseModel):
     init_method: str
     regularization_method: str
 
-    @validator('num_input_dimensions')
-    def num_input_dimensions_must_be_greater_than_zero(cls, num_input_dimensions: int) -> int:
+    @validator('num_nodes_per_layer')
+    def num_nodes_per_layer_must_be_greater_than_zero(cls, num_nodes_per_layer: Dict[int, int]) -> Dict[int, int]:
         """
-        This method validates that num_input_dimensions is greater than zero.
-
-        Parameters:
-            num_input_dimensions (int): Number of input dimensions.
-
-        Returns:
-            int: Number of input dimensions.
-        """
-
-        if num_input_dimensions <= 0:
-            raise ValueError('num_input_dimensions must be greater than zero')
-        
-        return num_input_dimensions
-    
-    @validator('num_output_nodes')
-    def num_output_nodes_must_be_greater_than_zero(cls, num_output_nodes: int) -> int:
-        """
-        This method validates that num_output_nodes is greater than zero.
+        This method validates that num_nodes_per_layer is greater than zero.
         
         Parameters:
-            num_output_nodes (int): Number of output nodes.
+            num_nodes_per_layer (dict[int, int]): Number of nodes per layer.
 
         Returns:
-            int: Number of output nodes.
+            dict[int, int]: Number of nodes per layer.
         """
 
-        if num_output_nodes <= 0:
-            raise ValueError('num_output_nodes must be greater than zero')
-        
-        return num_output_nodes
-    
-    @validator('num_hidden_layers')
-    def num_hidden_layers_must_be_greater_than_zero(cls, num_hidden_layers: int) -> int:
-        """
-        This method validates that num_hidden_layers is greater than zero.
-
-        Parameters:
-            num_hidden_layers (int): Number of hidden layers.
-
-        Returns:
-            int: Number of hidden layers.
-        """
-
-        if num_hidden_layers <= 0:
-            raise ValueError('num_hidden_layers must be greater than zero')
-        
-        return num_hidden_layers
-    
-    @validator('num_nodes_per_hidden_layer')
-    def num_nodes_per_hidden_layer_must_be_greater_than_zero(cls, num_nodes_per_hidden_layer: Dict[int, int]) -> Dict[int, int]:
-        """
-        This method validates that num_nodes_per_hidden_layer is greater than zero.
-
-        Parameters:
-            num_nodes_per_hidden_layer (dict[int, int]): Number of nodes per hidden layer.
-        
-        Returns:
-            dict[int, int]: Number of nodes per hidden layer.
-        """
-
-        for value in num_nodes_per_hidden_layer.values():
+        for key, value in num_nodes_per_layer.items():
             if value <= 0:
-                raise ValueError('num_nodes_per_hidden_layer must be greater than zero')
+                raise ValueError(f'{value} is an invalid number of nodes for layer {key}')
             
-        return num_nodes_per_hidden_layer
+        return num_nodes_per_layer
     
     @validator('activation_function_per_layer')
     def activation_function_per_layer_must_be_valid(cls, activation_function_per_layer: Dict[int, str]) -> Dict[int, str]:
@@ -253,5 +199,4 @@ class Hyperparameters(BaseModel):
         
         return regularization_method.casefold()
     
-    # TODO: Add validation that confirms num_nodes_per_hidden_layer and activation_function_per_layer have the same number of
-    # nodes as num_hidden_layers.
+    # TODO: Validation to confirm num_nodes_per_layer is consistent with activation_function_per_layer.

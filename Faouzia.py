@@ -80,8 +80,20 @@ class Faouzia(ABC):
 
         forward_pass_output = self.forward_pass(self.features, weights, bias, hyperparameters)
         loss = self.calculate_loss(self.labels, forward_pass_output, hyperparameters)
+        weights_updated, bias_updated = self.backpropagation(hyperparameters, weights, bias, self.features, self.labels)
 
-        weights_trained, bias_trained = self.backpropagation(hyperparameters, weights, bias, self.features, self.labels)
+        ctr = 0
+
+        while ctr <= 10:
+
+            forward_pass_output = self.forward_pass(self.features, weights_updated, bias_updated, hyperparameters)
+            loss = self.calculate_loss(self.labels, forward_pass_output, hyperparameters)
+            weights_updated, bias_updated = self.backpropagation(hyperparameters, weights_updated, bias_updated, self.features, self.labels)
+
+            ctr += 1
+
+
+        return weights_updated, bias_updated
 
 
     def forward_pass(self, features: np.ndarray, weights: np.ndarray, bias: np.ndarray, hyperparameters: Hyperparameters) -> np.ndarray:
@@ -100,7 +112,7 @@ class Faouzia(ABC):
 
         logger.info("Performing forward pass...")
 
-        for layer in range(1, hyperparameters.num_hidden_layers + 2):
+        for layer in range(1, len(hyperparameters.num_nodes_per_layer)):
             # Input layer
             if layer == 1:
                 weighted_sum = np.dot(features, weights[layer - 1]) + bias[layer - 1]
@@ -113,7 +125,6 @@ class Faouzia(ABC):
 
                 activation = eval(hyperparameters.activation_function_per_layer[layer])(weighted_sum)
 
-        logger.debug(f'Output of forward pass: {activation}')
         logger.debug(f'Output of forward pass shape: {activation.shape}')
 
         return activation
@@ -181,17 +192,15 @@ class Faouzia(ABC):
 
         delta.reverse()
 
-        logger.debug(f'Delta: {delta}')
-
         logger.info("Updating weights and bias...")
 
-        for layer in range(1, hyperparameters.num_hidden_layers + 2):
-            
-            weights_updated[layer - 1] = weights_updated[layer - 1] - (hyperparameters.learning_rate * np.dot(activations[layer - 1].T, delta[layer - 1]))
+        for layer in range(1, len(hyperparameters.num_nodes_per_layer)):
+
+            weights_updated[layer - 1] = weights_updated[layer - 1] - (hyperparameters.learning_rate * np.sum(np.dot(activations[layer - 1].T, delta[layer - 1])))
             bias_updated[layer - 1] = bias_updated[layer - 1] - (hyperparameters.learning_rate * np.sum(delta[layer - 1], axis=0, keepdims=True))
 
-        logger.debug(f'Updated weights: {weights_updated}')
-        logger.debug(f'Updated bias: {bias_updated}')
+        logger.debug(f'Adjustment to weights: {(hyperparameters.learning_rate * np.sum(np.dot(activations[layer - 1].T, delta[layer - 1])))}')
+        logger.debug(f'Adjustment to bias: {(hyperparameters.learning_rate * np.sum(delta[layer - 1], axis=0, keepdims=True))}')
 
         return weights_updated, bias_updated
 
@@ -207,12 +216,9 @@ class Faouzia(ABC):
         logger.info("Initializing hyperparameters...")
 
         hyperparameters = Hyperparameters(
-            num_input_dimensions=self.features.shape[1],
-            num_output_nodes=self.labels.shape[1],
-            num_hidden_layers=1,
-            num_nodes_per_hidden_layer={1: 10},
+            num_nodes_per_layer={1: self.features.shape[1], 2: self.labels.shape[1]},
             activation_function_per_layer={1: 'relu', 2: 'softmax'},
-            learning_rate=0.01,
+            learning_rate=0.001,
             num_epochs=1000,
             batch_size=32,
             optimizer='adam',
@@ -268,18 +274,15 @@ class Faouzia(ABC):
         weights = []
         bias = []
 
-        # Input layer
-        weights.append(np.random.randn(hyperparameters.num_input_dimensions, hyperparameters.num_nodes_per_hidden_layer[1]))
-        bias.append(np.full((1, hyperparameters.num_nodes_per_hidden_layer[1]), 0.1))
+        for key, value in hyperparameters.num_nodes_per_layer.items():
 
-        # Hidden layers
-        for layer in range(2, hyperparameters.num_hidden_layers + 1):
-            weights.append(np.random.randn(hyperparameters.num_nodes_per_hidden_layer[layer - 1], hyperparameters.num_nodes_per_hidden_layer[layer]))
-            bias.append(np.full((1, hyperparameters.num_nodes_per_hidden_layer[layer]), 0.1))
+            if key == len(hyperparameters.num_nodes_per_layer):
+                continue
+            
+            weights.append(np.random.randn(value, hyperparameters.num_nodes_per_layer[key + 1]))
+            bias.append(np.full((1, hyperparameters.num_nodes_per_layer[key + 1]), 0.1))
 
-        # Output layer
-        weights.append(np.random.randn(hyperparameters.num_nodes_per_hidden_layer[hyperparameters.num_hidden_layers], hyperparameters.num_output_nodes))
-        bias.append(np.full((1, hyperparameters.num_output_nodes), 0.1))
+        # TODO: Test above code
 
         return weights, bias
 
