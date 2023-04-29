@@ -299,22 +299,3 @@ class Faouzia(ABC):
             bias.append(np.full((1, hyperparameters.num_nodes_per_layer[key + 1]), 0.1))
 
         return weights, bias
-
-
-
-
-"""
-import pandas as pd
-
-if __name__ == "__main__":
-    test_data = pd.read_csv("IRIS.csv")
-    test_data = test_data.values
-
-    labels_map = labels_to_one_hot_map(test_data, 4)
-    labels = preprocess_labels(test_data, 4, labels_map)
-
-    features = np.delete(test_data, 4, axis=1)
-
-    faouzia = Faouzia(features=features, labels=labels)
-    faouzia.execute_lifecycle()
-"""
