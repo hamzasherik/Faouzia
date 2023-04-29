@@ -7,10 +7,7 @@ class Hyperparameters(BaseModel):
     This class is used to store the hyperparameters of a deep learning model for Faouzia. It also includes both built-in and custom data validations.
 
     Attributes:
-        num_input_dimensions (int): Number of input dimensions.
-        num_output_nodes (int): Number of output nodes.
-        num_hidden_layers (int): Number of hidden layers.
-        num_nodes_per_hidden_layer (dict[int, int]): Number of nodes per hidden layer.
+        num_nodes_per_layer (dict[int, int]): Number of nodes per layer.
         activation_function_per_layer (dict[int, str]): Activation function per layer.
         learning_rate (float): Learning rate.
         optimizer (str): Optimizer.

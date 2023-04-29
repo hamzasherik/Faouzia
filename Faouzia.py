@@ -1,5 +1,4 @@
 import numpy as np
-import copy
 
 from typing import Dict
 from abc import ABC
@@ -56,13 +55,26 @@ class Faouzia(ABC):
 
         hyperparameters = self.initialize_hyperparameters()
         weights, bias = self.initialize_parameters(hyperparameters)
-        weights_trained, bias_trained = self.train_model(hyperparameters, weights, bias)
+        current_config = self.train_model(hyperparameters, weights, bias)
 
-        #config = Configuration(hyperparameters=hyperparameters, weights=weights, biases=bias, accuracy=accuracy)
+        loss_threshold = 100
+        optimization_iteration_threshold = 100
+
+        optimization_ctr = 0
+
+        while current_config.loss > loss_threshold and optimization_ctr < optimization_iteration_threshold:
+
+            # TODO: Figure out how to iterate through different combinations of hyperparameters. Start off with naive approach for simplicity
+ 
+            hyperparameters = self.initialize_hyperparameters()  # TODO: Make more generic initialization method for hyperparameters or edit currrent model
+            weights, bias = self.initialize_parameters(hyperparameters)
+            current_config = self.train_model(hyperparameters, weights, bias)
+
+            optimization_ctr += 1
 
         return True
 
-    def train_model(self, hyperparameters: Hyperparameters, weights: np.ndarray, bias: np.ndarray) -> np.ndarray:
+    def train_model(self, hyperparameters: Hyperparameters, weights: np.ndarray, bias: np.ndarray) -> Configuration:
         """
         This method trains a deep learning model using the given hyperparameters, weights and bias.
 
@@ -82,19 +94,19 @@ class Faouzia(ABC):
         loss = self.calculate_loss(self.labels, forward_pass_output, hyperparameters)
         weights_updated, bias_updated = self.backpropagation(hyperparameters, weights, bias, self.features, self.labels)
 
-        ctr = 0
+        epoch_ctr = 0
 
-        while ctr <= 10:
+        while epoch_ctr < hyperparameters.num_epochs:
 
             forward_pass_output = self.forward_pass(self.features, weights_updated, bias_updated, hyperparameters)
             loss = self.calculate_loss(self.labels, forward_pass_output, hyperparameters)
             weights_updated, bias_updated = self.backpropagation(hyperparameters, weights_updated, bias_updated, self.features, self.labels)
 
-            ctr += 1
+        config = Configuration(hyperparameters=hyperparameters, weights=weights, biases=bias, loss=loss)
 
+        logger.debug(f'Current configuration: {config}')
 
-        return weights_updated, bias_updated
-
+        return config
 
     def forward_pass(self, features: np.ndarray, weights: np.ndarray, bias: np.ndarray, hyperparameters: Hyperparameters) -> np.ndarray:
         """
@@ -174,7 +186,7 @@ class Faouzia(ABC):
         zs = []
         activations = [features]
 
-        for layer in range(1, hyperparameters.num_hidden_layers + 2):
+        for layer in range(1, len(hyperparameters.num_nodes_per_layer)):
 
             zs.append(np.dot(activations[layer - 1], weights[layer - 1]) + bias[layer - 1])
             activations.append(eval(hyperparameters.activation_function_per_layer[layer])(zs[layer - 1]))
@@ -183,12 +195,16 @@ class Faouzia(ABC):
 
         delta = []
 
+        activation_function_per_layer_copy = hyperparameters.activation_function_per_layer.copy() 
+
+        key, output_layer_activation_function = activation_function_per_layer_copy.popitem()
+  
         # Output layer
-        delta.append(eval('categorical_cross_entropy_derivative')(labels, activations[-1]) * eval('softmax_derivative')(zs[-1]))
+        delta.append(eval(hyperparameters.loss_function + '_derivative')(labels, activations[-1]) * eval(output_layer_activation_function + '_derivative')(zs[-1]))
 
         # Hidden layers
-        for layer in range(hyperparameters.num_hidden_layers, 0, -1):
-            delta.append(np.dot(delta[-1], weights[layer].T) * eval('relu_derivative')(zs[layer - 1]))
+        for layer in range((len(hyperparameters.num_nodes_per_layer) - 2), 0, -1):
+            delta.append(np.dot(delta[-1], weights[layer].T) * eval(hyperparameters.activation_function_per_layer[layer] + '_derivative')(zs[layer - 1]))
 
         delta.reverse()
 
@@ -196,10 +212,10 @@ class Faouzia(ABC):
 
         for layer in range(1, len(hyperparameters.num_nodes_per_layer)):
 
-            weights_updated[layer - 1] = weights_updated[layer - 1] - (hyperparameters.learning_rate * np.sum(np.dot(activations[layer - 1].T, delta[layer - 1])))
+            weights_updated[layer - 1] = weights_updated[layer - 1] - (hyperparameters.learning_rate * np.sum(np.dot(activations[layer].T, delta[layer - 1])))
             bias_updated[layer - 1] = bias_updated[layer - 1] - (hyperparameters.learning_rate * np.sum(delta[layer - 1], axis=0, keepdims=True))
 
-        logger.debug(f'Adjustment to weights: {(hyperparameters.learning_rate * np.sum(np.dot(activations[layer - 1].T, delta[layer - 1])))}')
+        logger.debug(f'Adjustment to weights: {(hyperparameters.learning_rate * np.sum(np.dot(activations[layer].T, delta[layer - 1])))}')
         logger.debug(f'Adjustment to bias: {(hyperparameters.learning_rate * np.sum(delta[layer - 1], axis=0, keepdims=True))}')
 
         return weights_updated, bias_updated
@@ -282,14 +298,12 @@ class Faouzia(ABC):
             weights.append(np.random.randn(value, hyperparameters.num_nodes_per_layer[key + 1]))
             bias.append(np.full((1, hyperparameters.num_nodes_per_layer[key + 1]), 0.1))
 
-        # TODO: Test above code
-
         return weights, bias
 
 
 
 
-
+"""
 import pandas as pd
 
 if __name__ == "__main__":
@@ -303,3 +317,4 @@ if __name__ == "__main__":
 
     faouzia = Faouzia(features=features, labels=labels)
     faouzia.execute_lifecycle()
+"""

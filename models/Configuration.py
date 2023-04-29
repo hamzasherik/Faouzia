@@ -19,22 +19,23 @@ class Configuration(BaseModel):
     hyperparameters: Hyperparameters
     weights: pnd.NDArray
     biases: pnd.NDArray
-    accuracy: float = 0.0
+    loss: float
 
-    @validator('accuracy', always=True)
-    def accuracy_must_be_between_0_and_1(cls, accuracy: float) -> float:
+    @validator('loss', always=True)
+    def accuracy_must_be_between_0_and_1(cls, loss: float) -> float:
         """
-        This method validates that the accuracy is between 0 and 1.
+        This method validates that the loss is greater than or equal to 0
         
         Parameters:
-            accuracy (float): Accuracy of the deep learning model.
+            loss (float): Loss of the deep learning model.
         
         Returns:
-            float: Accuracy of the deep learning model.
+            float: Loss of the deep learning model.
         """
 
-        if accuracy < 0 or accuracy > 1:
-            raise ValueError('Accuracy must be between 0 and 1.')
-        return accuracy
+        if loss < 0:
+            raise ValueError('Accuracy must be between 0 or greater.')
+        
+        return loss
 
-    # TODO: Validation for both weights and bias confirming dimensions are correct
+    # TODO: Validation for both weights and bias confirming dimensions are correct. Might need to use root_validator
