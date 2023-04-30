@@ -6,11 +6,11 @@ from utils.logger import logger
 from utils.data_utils import labels_to_one_hot_map, preprocess_labels
 from utils.activation_functions import softmax, relu, softmax_derivative, relu_derivative
 from utils.loss_functions import categorical_cross_entropy, categorical_cross_entropy_derivative
-from models.Hyperparameters import Hyperparameters
-from models.Configuration import Configuration
+from models.hyperparameters import Hyperparameters
+from models.configuration import Configuration
 
 
-class Faouzia(ABC):
+class FaouziaTabularClassification(ABC):
     """
     This class is used to determine the optimal configuration of parameters and hyperparameters for a multi-class classification 
     problem for tabular data only.
@@ -23,6 +23,7 @@ class Faouzia(ABC):
         labels (np.ndarray): Labels of the dataset.
     """
 
+    # TODO: Remove constructor 
     def __init__(self, features: np.ndarray, labels: np.ndarray) -> None:
         """
         Constructs a new Faouzia object.
@@ -39,6 +40,7 @@ class Faouzia(ABC):
 
         # TODO: Add validator that confirms contents of labels are one-hot encoded
 
+    # TODO: Remove this method from concrete implementation
     # TODO: Update docstring
     def execute_lifecycle(self) -> bool:
         """
@@ -57,20 +59,7 @@ class Faouzia(ABC):
         weights, bias = self.initialize_parameters(hyperparameters)
         current_config = self.train_model(hyperparameters, weights, bias)
 
-        loss_threshold = 100
-        optimization_iteration_threshold = 100
-
-        optimization_ctr = 0
-
-        while current_config.loss > loss_threshold and optimization_ctr < optimization_iteration_threshold:
-
-            # TODO: Figure out how to iterate through different combinations of hyperparameters. Start off with naive approach for simplicity
- 
-            hyperparameters = self.initialize_hyperparameters()  # TODO: Make more generic initialization method for hyperparameters or edit currrent model
-            weights, bias = self.initialize_parameters(hyperparameters)
-            current_config = self.train_model(hyperparameters, weights, bias)
-
-            optimization_ctr += 1
+        logger.debug(f'Final configuration: {current_config}')
 
         return True
 
@@ -220,7 +209,6 @@ class Faouzia(ABC):
 
         return weights_updated, bias_updated
 
-    # TODO: Move to utils
     def initialize_hyperparameters(self) -> Hyperparameters:
         """
         This method initializes the hyperparameters of the deep learning model.
@@ -246,8 +234,7 @@ class Faouzia(ABC):
         logger.debug(f'Hyperparameters: {hyperparameters}')
 
         return hyperparameters
-    
-    # TODO: Move to utils
+
     def initialize_parameters(self, hyperparameters: Hyperparameters) -> np.ndarray:
         """
         This method initializes the parameters (weights and bias) of the deep learning model.
