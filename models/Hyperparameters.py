@@ -2,6 +2,7 @@ from pydantic import BaseModel, validator
 from typing import Dict
 
 
+# TODO: Convert to modelConfig
 class Hyperparameters(BaseModel):
     """
     This class is used to store the hyperparameters of a deep learning model for Faouzia. It also includes both built-in and custom data validations.

@@ -1,7 +1,7 @@
 import pydantic_numpy.dtype as pnd
 
 from pydantic import BaseModel, validator
-from models.Hyperparameters import Hyperparameters
+from models.hyperparameters import Hyperparameters
 
 
 class Configuration(BaseModel):
