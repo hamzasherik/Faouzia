@@ -3,8 +3,9 @@ import pandas as pd
 
 from abc import ABC, abstractmethod
 from utils.logger import logger
-from models.hyperparameters import Hyperparameters
+from models.model_config import ModelConfig
 
+# NOTE: Start off by implementing classification and regression for tabular data
 # TODO: Complete docstring
 class Faouzia(ABC):
     """
@@ -36,18 +37,21 @@ class Faouzia(ABC):
         pass
 
     @abstractmethod
-    def model_selection(self) -> None:
+    def model_selection(self) -> ModelConfig:
         """
         This method selects the model to be used for training and evaluation.
 
         This method includes hyperparameter selection, architecture selection, hyperparameter tuning, etc. The specific steps
         will vary depending on the concrete implementation and the data.
+
+        Returns:
+            ModelConfig: Model configuration containing the hyperparameters, architecture, etc. of the deep learning model.
         """
 
         pass
 
     @abstractmethod
-    def train_model(self, hyperparameters: Hyperparameters, weights: np.ndarray, bias: np.ndarray) -> np.ndarray:
+    def train_model(self, model_config: ModelConfig, weights: np.ndarray, bias: np.ndarray) -> np.ndarray:
         """
         This method trains a deep learning model using the given hyperparameters, weights and bias.
 
@@ -64,7 +68,7 @@ class Faouzia(ABC):
         pass
 
     @abstractmethod
-    def evaluate_model(self, hyperparameters: Hyperparameters, weights: np.ndarray, bias: np.ndarray) -> float:
+    def evaluate_model(self, model_config: ModelConfig, weights: np.ndarray, bias: np.ndarray) -> float:
         """
         This method evaluates a deep learning model using the given hyperparameters, weights and bias.
 
@@ -79,3 +83,4 @@ class Faouzia(ABC):
 
         pass
 
+    # NOTE: May want to change evaluate model so that its where hyperparameter tuning is done and then create a predict method

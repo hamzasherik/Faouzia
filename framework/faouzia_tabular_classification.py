@@ -6,8 +6,6 @@ from utils.logger import logger
 from utils.data_utils import labels_to_one_hot_map, preprocess_labels
 from utils.activation_functions import softmax, relu, softmax_derivative, relu_derivative
 from utils.loss_functions import categorical_cross_entropy, categorical_cross_entropy_derivative
-from models.hyperparameters import Hyperparameters
-from models.configuration import Configuration
 
 
 class FaouziaTabularClassification(ABC):
