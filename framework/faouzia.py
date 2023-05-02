@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 
 from abc import ABC, abstractmethod
-from utils.logger import logger
 from models.model_config import ModelConfig
 
 # NOTE: Start off by implementing classification and regression for tabular data
@@ -20,18 +19,19 @@ class Faouzia(ABC):
         Parameters:
             data (pd.DataFrame): Dataframe containing the dataset.
         """
-        
-        logger.info("Initializing Faouzia object...")
 
         self.data = data
  
     # NOTE: preprocess data in pandas then convert to numpy for model training
     @abstractmethod
-    def preprocess_data(self) -> None:
+    def preprocess_data(self) -> np.ndarray:
         """
         This method preprocesses the dataset according to user specifications.
 
         The preprocessing steps will vary depending on the concrete implementation and the data.
+
+        Returns:
+            np.ndarray: Preprocessed dataset.
         """
 
         pass
